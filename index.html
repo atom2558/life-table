@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>แอปจัดตารางเวลาของฉัน</title>
+    <link
+      rel="icon"
+      href="https://cdn-icons-png.flaticon.com/512/566/566058.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      href="https://cdn-icons-png.flaticon.com/512/566/566058.png"
+    />
+    <style>
+      :root {
+        --primary: #007aff;
+        --bg: #f2f2f7;
+        --card: #ffffff;
+        --text: #1c1c1e;
+        --active-color: #ffcc00; /* สีเหลือง */
+        --active-bg: #fffbe6;
+      }
+
+      body {
+        font-family: "Kanit", sans-serif;
+        background-color: var(--bg);
+        color: var(--text);
+        margin: 0;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1000px;
+        margin: auto;
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 20px;
+      }
+
+      /* --- ฝั่งซ้าย (นาฬิกา) --- */
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .card {
+        background: var(--card);
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      }
+
+      .timer-display {
+        font-size: 48px;
+        font-weight: 600;
+        text-align: center;
+        margin: 20px 0;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .now-doing {
+        text-align: center;
+        padding: 15px;
+        background: #e5e5ea;
+        border-radius: 15px;
+        margin-bottom: 15px;
+        transition: 0.3s;
+      }
+
+      .now-doing.active-status {
+        background: var(--active-bg);
+        border: 2px solid var(--active-color);
+      }
+
+      .now-doing span {
+        display: block;
+        font-size: 14px;
+        color: #555;
+      }
+      .now-doing strong {
+        font-size: 20px;
+        color: #d4a000;
+        font-weight: 600;
+      }
+
+      .btn-group {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      button {
+        font-family: "Kanit", sans-serif;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: 0.2s;
+      }
+
+      .btn-main {
+        background: var(--primary);
+        color: white;
+      }
+      .btn-alt {
+        background: #e5e5ea;
+        color: #1c1c1e;
+      }
+      .btn-edit {
+        background: #ff9500;
+        color: white;
+        font-size: 12px;
+        padding: 5px 10px;
+      }
+      .btn-del {
+        background: #ff3b30;
+        color: white;
+        font-size: 12px;
+        padding: 5px 10px;
+      }
+
+      button:hover {
+        opacity: 0.8;
+        transform: translateY(-2px);
+      }
+
+      /* --- ฝั่งขวา (ตาราง) --- */
+      .schedule-header {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      .tab-group {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .tab-group button {
+        background: #e5e5ea;
+      }
+      .tab-group button.active {
+        background: var(--active-color);
+        color: #000;
+        font-weight: 600;
+      }
+
+      .schedule-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .schedule-row {
+        display: grid;
+        grid-template-columns: 120px 1fr 120px;
+        align-items: center;
+        padding: 15px;
+        background: #f9f9fb;
+        border-radius: 15px;
+        border: 2px solid transparent;
+        transition: 0.3s;
+      }
+
+      .schedule-row.active-now {
+        border-color: var(--active-color);
+        background: var(--active-bg);
+        box-shadow: 0 5px 15px rgba(255, 204, 0, 0.2);
+        transform: scale(1.02);
+      }
+
+      .schedule-row.active-now .time-col {
+        color: #d4a000;
+        font-weight: 600;
+      }
+      .time-col {
+        color: #8e8e93;
+        font-size: 14px;
+      }
+      .task-col {
+        font-weight: 400;
+        font-size: 16px;
+      }
+      .action-col {
+        display: flex;
+        gap: 5px;
+        justify-content: flex-end;
+      }
+
+      /* Modal เพิ่ม/แก้ไข */
+      #editModal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+      }
+      .modal-content {
+        background: white;
+        padding: 30px;
+        border-radius: 20px;
+        width: 350px;
+      }
+
+      input {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        box-sizing: border-box;
+        font-family: "Kanit";
+        font-size: 16px;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          grid-template-columns: 1fr;
+        }
+        .sidebar {
+          order: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="sidebar">
+        <div class="card">
+          <div id="statusBox" class="now-doing">
+            <span>อิงตามเวลาจริงตอนนี้ คุณกำลัง...</span>
+            <strong id="currentTaskLabel">กำลังโหลด...</strong>
+          </div>
+          <div class="timer-display" id="stopwatch">00:00:00</div>
+          <div class="btn-group">
+            <button class="btn-main" onclick="toggleTimer()" id="btnStart">
+              เริ่มจับเวลา
+            </button>
+            <button class="btn-alt" onclick="resetTimer()">รีเซ็ต</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <p style="font-size: 14px; margin-bottom: 10px">จัดการตารางเวลา</p>
+          <button
+            class="btn-main"
+            style="width: 100%; margin-bottom: 10px"
+            onclick="openEditor()"
+          >
+            ➕ เพิ่มกิจกรรมใหม่
+          </button>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="schedule-header">
+          <h2 id="tableTitle" style="margin: 0">ตารางเวลา</h2>
+          <div class="tab-group" id="tabsContainer"></div>
+        </div>
+        <div class="card">
+          <div id="scheduleContainer" class="schedule-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="editModal">
+      <div class="modal-content">
+        <h3 id="modalTitle">เพิ่มกิจกรรม</h3>
+        <input type="hidden" id="editIndex" value="-1" />
+
+        <label>เวลาเริ่ม (พิมพ์แบบ 24 ชม. เช่น 08:30 หรือ 20:00)</label>
+        <input
+          type="text"
+          id="editStartTime"
+          placeholder="00:00"
+          maxlength="5"
+        />
+
+        <label>เวลาจบ</label>
+        <input type="text" id="editEndTime" placeholder="00:00" maxlength="5" />
+
+        <label>ชื่อกิจกรรม</label>
+        <input type="text" id="editTitle" placeholder="เช่น 🎮 เล่นเกม" />
+
+        <div class="btn-group" style="margin-top: 15px">
+          <button class="btn-main" onclick="saveTask()">บันทึก</button>
+          <button class="btn-alt" onclick="closeEditor()">ยกเลิก</button>
+        </div>
+      </div>
+    </div>
+
+    <audio
+      id="alertSound"
+      src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
+    ></audio>
+
+    <script>
+      let defaultSchedules = {
+        "ตื่น 8:00": [
+          { start: "08:00", end: "08:30", task: "ตื่น + ล้างหน้า" },
+          { start: "08:30", end: "09:30", task: "🎮 เล่นเกม" },
+          { start: "10:00", end: "10:20", task: "🍽️ กินข้าว" },
+          { start: "10:30", end: "11:50", task: "📚 อ่าน (รอบ 1)" },
+          { start: "11:50", end: "13:00", task: "🎮 เล่นเกม" },
+          { start: "13:30", end: "13:50", task: "🍽️ กินข้าว" },
+          { start: "14:00", end: "15:20", task: "📚 อ่าน (รอบ 2)" },
+          { start: "15:20", end: "16:30", task: "🎮 เล่นเกม" },
+          { start: "16:30", end: "17:50", task: "📚 อ่าน (รอบ 3)" },
+          { start: "18:30", end: "18:50", task: "🍽️ กินข้าว" },
+          { start: "18:50", end: "19:20", task: "🚿 อาบน้ำ" },
+          { start: "19:30", end: "20:50", task: "📚 อ่าน (รอบ 4 ครบ 4 ชม.)" },
+          { start: "21:00", end: "22:30", task: "🎮 เล่นเกม" },
+          { start: "22:30", end: "23:59", task: "😴 นอน" },
+        ],
+        "ตื่น 9:00": [
+          { start: "09:00", end: "09:30", task: "ตื่น + ล้างหน้า" },
+          { start: "09:30", end: "10:00", task: "🎮 เล่นเกม" },
+          { start: "10:00", end: "10:20", task: "🍽️ กินข้าว" },
+          { start: "10:30", end: "11:50", task: "📚 อ่าน (รอบ 1)" },
+          { start: "11:50", end: "13:00", task: "🎮 เล่นเกม" },
+          { start: "13:30", end: "13:50", task: "🍽️ กินข้าว" },
+          { start: "14:00", end: "15:20", task: "📚 อ่าน (รอบ 2)" },
+          { start: "15:20", end: "16:30", task: "🎮 เล่นเกม" },
+          { start: "16:30", end: "17:50", task: "📚 อ่าน (รอบ 3)" },
+          { start: "18:30", end: "18:50", task: "🍽️ กินข้าว" },
+          { start: "18:50", end: "19:20", task: "🚿 อาบน้ำ" },
+          { start: "19:30", end: "20:50", task: "📚 อ่าน (รอบ 4 ครบ 4 ชม.)" },
+          { start: "21:00", end: "22:30", task: "🎮 เล่นเกม" },
+          { start: "22:30", end: "23:59", task: "😴 นอน" },
+        ],
+      };
+
+      let schedules =
+        JSON.parse(localStorage.getItem("mySchedules3")) || defaultSchedules;
+      let activeTable = Object.keys(schedules)[0];
+      let lastKnownTask = "";
+
+      function renderTabs() {
+        const container = document.getElementById("tabsContainer");
+        container.innerHTML = "";
+
+        Object.keys(schedules).forEach((tableName) => {
+          const btn = document.createElement("button");
+          btn.innerText = tableName;
+          btn.className = tableName === activeTable ? "active" : "";
+          btn.onclick = () => switchTable(tableName);
+          container.appendChild(btn);
+        });
+
+        const addBtn = document.createElement("button");
+        addBtn.innerText = "+ สร้างตารางใหม่";
+        addBtn.style.background = "#34c759";
+        addBtn.style.color = "white";
+        addBtn.onclick = createNewTable;
+        container.appendChild(addBtn);
+      }
+
+      function switchTable(name) {
+        activeTable = name;
+        document.getElementById("tableTitle").innerText = name;
+        renderTabs();
+        renderSchedule();
+      }
+
+      function createNewTable() {
+        let name = prompt("ตั้งชื่อตารางใหม่ (เช่น วันหยุด):");
+        if (name && !schedules[name]) {
+          schedules[name] = [];
+          saveData();
+          switchTable(name);
+        } else if (schedules[name]) {
+          alert("ชื่อนี้มีอยู่แล้ว!");
+        }
+      }
+
+      function renderSchedule() {
+        const container = document.getElementById("scheduleContainer");
+        container.innerHTML = "";
+
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2, "0");
+        const m = String(now.getMinutes()).padStart(2, "0");
+        const currentTimeStr = `${h}:${m}`;
+
+        let currentActiveTask = "เวลาว่าง / นอกตาราง";
+        let foundActive = false;
+
+        schedules[activeTable].forEach((item, index) => {
+          const isActive =
+            currentTimeStr >= item.start && currentTimeStr < item.end;
+
+          if (isActive) {
+            currentActiveTask = item.task;
+            foundActive = true;
+          }
+
+          const row = document.createElement("div");
+          row.className = `schedule-row ${isActive ? "active-now" : ""}`;
+          row.innerHTML = `
+                <div class="time-col">${item.start} - ${item.end}</div>
+                <div class="task-col">${item.task}</div>
+                <div class="action-col">
+                    <button class="btn-edit" onclick="openEditor(${index})">✏️</button>
+                    <button class="btn-del" onclick="deleteTask(${index})">ลบ</button>
+                </div>
+            `;
+          container.appendChild(row);
+        });
+
+        document.getElementById("currentTaskLabel").innerText =
+          currentActiveTask;
+        const statusBox = document.getElementById("statusBox");
+        if (foundActive) {
+          statusBox.classList.add("active-status");
+        } else {
+          statusBox.classList.remove("active-status");
+        }
+
+        if (lastKnownTask !== "" && lastKnownTask !== currentActiveTask) {
+          document
+            .getElementById("alertSound")
+            .play()
+            .catch((e) => console.log("กำลังรอ..."));
+        }
+        lastKnownTask = currentActiveTask;
+      }
+
+      function openEditor(index = -1) {
+        document.getElementById("editModal").style.display = "flex";
+        document.getElementById("editIndex").value = index;
+
+        if (index > -1) {
+          document.getElementById("modalTitle").innerText = "✏️ แก้ไขกิจกรรม";
+          const item = schedules[activeTable][index];
+          document.getElementById("editStartTime").value = item.start;
+          document.getElementById("editEndTime").value = item.end;
+          document.getElementById("editTitle").value = item.task;
+        } else {
+          document.getElementById("modalTitle").innerText =
+            "➕ เพิ่มกิจกรรมใหม่";
+          document.getElementById("editStartTime").value = "";
+          document.getElementById("editEndTime").value = "";
+          document.getElementById("editTitle").value = "";
+        }
+      }
+
+      function closeEditor() {
+        document.getElementById("editModal").style.display = "none";
+      }
+
+      function saveTask() {
+        const start = document.getElementById("editStartTime").value;
+        const end = document.getElementById("editEndTime").value;
+        const title = document.getElementById("editTitle").value;
+        const index = parseInt(document.getElementById("editIndex").value);
+
+        // เช็คว่าพิมพ์รูปแบบถูกไหม เช่น 08:00 หรือ 20:30
+        if (
+          start.length !== 5 ||
+          !start.includes(":") ||
+          end.length !== 5 ||
+          !end.includes(":")
+        ) {
+          alert("กรุณาพิมพ์เวลาให้ครบ 5 ตัวอักษร เช่น 08:30 หรือ 20:00 นะครับ");
+          return;
+        }
+
+        if (start && end && title) {
+          if (index > -1) {
+            schedules[activeTable][index] = { start, end, task: title };
+          } else {
+            schedules[activeTable].push({ start, end, task: title });
+          }
+
+          schedules[activeTable].sort((a, b) => a.start.localeCompare(b.start));
+          saveData();
+          renderSchedule();
+          closeEditor();
+        } else {
+          alert("กรุณาใส่ข้อมูลให้ครบทุกช่องนะครับ!");
+        }
+      }
+
+      function deleteTask(index) {
+        if (confirm("แน่ใจนะว่าจะลบกิจกรรมนี้?")) {
+          schedules[activeTable].splice(index, 1);
+          saveData();
+          renderSchedule();
+        }
+      }
+
+      function saveData() {
+        localStorage.setItem("mySchedules3", JSON.stringify(schedules));
+      }
+
+      let timerInterval;
+      let seconds = 0;
+      let isRunning = false;
+
+      function toggleTimer() {
+        const btn = document.getElementById("btnStart");
+        if (!isRunning) {
+          isRunning = true;
+          btn.innerText = "⏸️ พักจับเวลา";
+          btn.style.background = "#ff3b30";
+          timerInterval = setInterval(() => {
+            seconds++;
+            updateStopwatchDisplay();
+          }, 1000);
+        } else {
+          isRunning = false;
+          btn.innerText = "▶️ เริ่มจับเวลาต่อ";
+          btn.style.background = "var(--primary)";
+          clearInterval(timerInterval);
+        }
+      }
+
+      function resetTimer() {
+        clearInterval(timerInterval);
+        seconds = 0;
+        isRunning = false;
+        updateStopwatchDisplay();
+        document.getElementById("btnStart").innerText = "เริ่มจับเวลา";
+        document.getElementById("btnStart").style.background = "var(--primary)";
+      }
+
+      function updateStopwatchDisplay() {
+        const h = String(Math.floor(seconds / 3600)).padStart(2, "0");
+        const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
+        const s = String(seconds % 60).padStart(2, "0");
+        document.getElementById("stopwatch").innerText = `${h}:${m}:${s}`;
+      }
+
+      document.getElementById("tableTitle").innerText = activeTable;
+      renderTabs();
+      renderSchedule();
+      updateStopwatchDisplay();
+
+      setInterval(renderSchedule, 1000);
+    </script>
+  </body>
+</html>
