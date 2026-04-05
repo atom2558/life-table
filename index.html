@@ -4,16 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>แอปจัดตารางเวลาของฉัน</title>
-    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/566/566058.png" />
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/566/566058.png" />
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link
+      rel="icon"
+      href="https://cdn-icons-png.flaticon.com/512/566/566058.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      href="https://cdn-icons-png.flaticon.com/512/566/566058.png"
+    />
     <style>
       :root {
         --primary: #007aff;
         --bg: #f2f2f7;
         --card: #ffffff;
         --text: #1c1c1e;
-        --active-color: #ffcc00; 
+        --active-color: #ffcc00; /* สีเหลือง */
         --active-bg: #fffbe6;
       }
 
@@ -33,7 +38,12 @@
         gap: 20px;
       }
 
-      .sidebar { display: flex; flex-direction: column; gap: 20px; }
+      /* --- ฝั่งซ้าย (นาฬิกา) --- */
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
       .card {
         background: var(--card);
         border-radius: 20px;
@@ -63,10 +73,23 @@
         border: 2px solid var(--active-color);
       }
 
-      .now-doing span { display: block; font-size: 14px; color: #555; }
-      .now-doing strong { font-size: 20px; color: #d4a000; font-weight: 600; }
+      .now-doing span {
+        display: block;
+        font-size: 14px;
+        color: #555;
+      }
+      .now-doing strong {
+        font-size: 20px;
+        color: #d4a000;
+        font-weight: 600;
+      }
 
-      .btn-group { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+      .btn-group {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
 
       button {
         font-family: "Kanit", sans-serif;
@@ -78,19 +101,61 @@
         transition: 0.2s;
       }
 
-      .btn-main { background: var(--primary); color: white; }
-      .btn-alt { background: #e5e5ea; color: #1c1c1e; }
-      .btn-edit { background: #ff9500; color: white; font-size: 12px; padding: 5px 10px; }
-      .btn-del { background: #ff3b30; color: white; font-size: 12px; padding: 5px 10px; }
+      .btn-main {
+        background: var(--primary);
+        color: white;
+      }
+      .btn-alt {
+        background: #e5e5ea;
+        color: #1c1c1e;
+      }
+      .btn-edit {
+        background: #ff9500;
+        color: white;
+        font-size: 12px;
+        padding: 5px 10px;
+      }
+      .btn-del {
+        background: #ff3b30;
+        color: white;
+        font-size: 12px;
+        padding: 5px 10px;
+      }
 
-      button:hover { opacity: 0.8; transform: translateY(-2px); }
+      button:hover {
+        opacity: 0.8;
+        transform: translateY(-2px);
+      }
 
-      .schedule-header { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
-      .tab-group { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
-      .tab-group button { background: #e5e5ea; }
-      .tab-group button.active { background: var(--active-color); color: #000; font-weight: 600; }
+      /* --- ฝั่งขวา (ตาราง) --- */
+      .schedule-header {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-bottom: 20px;
+      }
 
-      .schedule-list { display: flex; flex-direction: column; gap: 10px; }
+      .tab-group {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .tab-group button {
+        background: #e5e5ea;
+      }
+      .tab-group button.active {
+        background: var(--active-color);
+        color: #000;
+        font-weight: 600;
+      }
+
+      .schedule-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
       .schedule-row {
         display: grid;
         grid-template-columns: 120px 1fr 120px;
@@ -109,28 +174,62 @@
         transform: scale(1.02);
       }
 
-      .time-col { color: #8e8e93; font-size: 14px; }
-      .task-col { font-weight: 400; font-size: 16px; }
-      .action-col { display: flex; gap: 5px; justify-content: flex-end; }
+      .schedule-row.active-now .time-col {
+        color: #d4a000;
+        font-weight: 600;
+      }
+      .time-col {
+        color: #8e8e93;
+        font-size: 14px;
+      }
+      .task-col {
+        font-weight: 400;
+        font-size: 16px;
+      }
+      .action-col {
+        display: flex;
+        gap: 5px;
+        justify-content: flex-end;
+      }
 
+      /* Modal เพิ่ม/แก้ไข */
       #editModal {
         display: none;
         position: fixed;
-        top: 0; left: 0; width: 100%; height: 100%;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
         background: rgba(0, 0, 0, 0.5);
-        justify-content: center; align-items: center;
+        justify-content: center;
+        align-items: center;
         z-index: 2000;
       }
-      .modal-content { background: white; padding: 30px; border-radius: 20px; width: 350px; }
+      .modal-content {
+        background: white;
+        padding: 30px;
+        border-radius: 20px;
+        width: 350px;
+      }
+
       input {
-        width: 100%; padding: 10px; margin: 10px 0;
-        border-radius: 10px; border: 1px solid #ddd;
-        box-sizing: border-box; font-family: "Kanit"; font-size: 16px;
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        box-sizing: border-box;
+        font-family: "Kanit";
+        font-size: 16px;
       }
 
       @media (max-width: 768px) {
-        .container { grid-template-columns: 1fr; }
-        .sidebar { order: 1; }
+        .container {
+          grid-template-columns: 1fr;
+        }
+        .sidebar {
+          order: 1;
+        }
       }
     </style>
   </head>
@@ -144,14 +243,20 @@
           </div>
           <div class="timer-display" id="stopwatch">00:00:00</div>
           <div class="btn-group">
-            <button class="btn-main" onclick="toggleTimer()" id="btnStart">เริ่มจับเวลา</button>
+            <button class="btn-main" onclick="toggleTimer()" id="btnStart">
+              เริ่มจับเวลา
+            </button>
             <button class="btn-alt" onclick="resetTimer()">รีเซ็ต</button>
           </div>
         </div>
 
         <div class="card">
           <p style="font-size: 14px; margin-bottom: 10px">จัดการตารางเวลา</p>
-          <button class="btn-main" style="width: 100%; margin-bottom: 10px" onclick="openEditor()">
+          <button
+            class="btn-main"
+            style="width: 100%; margin-bottom: 10px"
+            onclick="openEditor()"
+          >
             ➕ เพิ่มกิจกรรมใหม่
           </button>
         </div>
@@ -172,12 +277,21 @@
       <div class="modal-content">
         <h3 id="modalTitle">เพิ่มกิจกรรม</h3>
         <input type="hidden" id="editIndex" value="-1" />
-        <label>เวลาเริ่ม (24 ชม.)</label>
-        <input type="text" id="editStartTime" placeholder="08:00" maxlength="5" />
+
+        <label>เวลาเริ่ม (พิมพ์แบบ 24 ชม. เช่น 08:30 หรือ 20:00)</label>
+        <input
+          type="text"
+          id="editStartTime"
+          placeholder="00:00"
+          maxlength="5"
+        />
+
         <label>เวลาจบ</label>
-        <input type="text" id="editEndTime" placeholder="09:00" maxlength="5" />
+        <input type="text" id="editEndTime" placeholder="00:00" maxlength="5" />
+
         <label>ชื่อกิจกรรม</label>
         <input type="text" id="editTitle" placeholder="เช่น 🎮 เล่นเกม" />
+
         <div class="btn-group" style="margin-top: 15px">
           <button class="btn-main" onclick="saveTask()">บันทึก</button>
           <button class="btn-alt" onclick="closeEditor()">ยกเลิก</button>
@@ -185,8 +299,10 @@
       </div>
     </div>
 
-    <audio id="alertSound" src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3"></audio>
-    <audio id="clickSound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+    <audio
+      id="alertSound"
+      src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
+    ></audio>
 
     <script>
       let defaultSchedules = {
@@ -224,34 +340,28 @@
         ],
       };
 
-      let schedules = JSON.parse(localStorage.getItem("mySchedules3")) || defaultSchedules;
+      let schedules =
+        JSON.parse(localStorage.getItem("mySchedules3")) || defaultSchedules;
       let activeTable = Object.keys(schedules)[0];
       let lastKnownTask = "";
-
-      // ฟังก์ชันช่วยเล่นเสียง
-      function playAudio(id) {
-        const sound = document.getElementById(id);
-        if (sound) {
-          sound.currentTime = 0; // เริ่มใหม่ทุกครั้งที่กด
-          sound.play().catch(e => console.log("รอคลิกหน้าเว็บก่อน"));
-        }
-      }
 
       function renderTabs() {
         const container = document.getElementById("tabsContainer");
         container.innerHTML = "";
+
         Object.keys(schedules).forEach((tableName) => {
           const btn = document.createElement("button");
           btn.innerText = tableName;
           btn.className = tableName === activeTable ? "active" : "";
-          btn.onclick = () => { playAudio('clickSound'); switchTable(tableName); };
+          btn.onclick = () => switchTable(tableName);
           container.appendChild(btn);
         });
+
         const addBtn = document.createElement("button");
         addBtn.innerText = "+ สร้างตารางใหม่";
         addBtn.style.background = "#34c759";
         addBtn.style.color = "white";
-        addBtn.onclick = () => { playAudio('clickSound'); createNewTable(); };
+        addBtn.onclick = createNewTable;
         container.appendChild(addBtn);
       }
 
@@ -263,26 +373,36 @@
       }
 
       function createNewTable() {
-        let name = prompt("ตั้งชื่อตารางใหม่:");
+        let name = prompt("ตั้งชื่อตารางใหม่ (เช่น วันหยุด):");
         if (name && !schedules[name]) {
           schedules[name] = [];
           saveData();
           switchTable(name);
+        } else if (schedules[name]) {
+          alert("ชื่อนี้มีอยู่แล้ว!");
         }
       }
 
       function renderSchedule() {
         const container = document.getElementById("scheduleContainer");
         container.innerHTML = "";
-        const now = new Date();
-        const currentTimeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
-        let currentActiveTask = "เวลาว่าง";
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2, "0");
+        const m = String(now.getMinutes()).padStart(2, "0");
+        const currentTimeStr = `${h}:${m}`;
+
+        let currentActiveTask = "เวลาว่าง / นอกตาราง";
         let foundActive = false;
 
         schedules[activeTable].forEach((item, index) => {
-          const isActive = currentTimeStr >= item.start && currentTimeStr < item.end;
-          if (isActive) { currentActiveTask = item.task; foundActive = true; }
+          const isActive =
+            currentTimeStr >= item.start && currentTimeStr < item.end;
+
+          if (isActive) {
+            currentActiveTask = item.task;
+            foundActive = true;
+          }
 
           const row = document.createElement("div");
           row.className = `schedule-row ${isActive ? "active-now" : ""}`;
@@ -290,19 +410,27 @@
                 <div class="time-col">${item.start} - ${item.end}</div>
                 <div class="task-col">${item.task}</div>
                 <div class="action-col">
-                    <button class="btn-edit" onclick="playAudio('clickSound'); openEditor(${index})">✏️</button>
-                    <button class="btn-del" onclick="playAudio('clickSound'); deleteTask(${index})">ลบ</button>
+                    <button class="btn-edit" onclick="openEditor(${index})">✏️</button>
+                    <button class="btn-del" onclick="deleteTask(${index})">ลบ</button>
                 </div>
             `;
           container.appendChild(row);
         });
 
-        document.getElementById("currentTaskLabel").innerText = currentActiveTask;
-        if (foundActive) { statusBox.classList.add("active-status"); } else { statusBox.classList.remove("active-status"); }
+        document.getElementById("currentTaskLabel").innerText =
+          currentActiveTask;
+        const statusBox = document.getElementById("statusBox");
+        if (foundActive) {
+          statusBox.classList.add("active-status");
+        } else {
+          statusBox.classList.remove("active-status");
+        }
 
-        // --- ระบบแจ้งเตือนเมื่อเปลี่ยนกิจกรรม (เสียง 3 วินาที) ---
         if (lastKnownTask !== "" && lastKnownTask !== currentActiveTask) {
-          playAudio('alertSound'); 
+          document
+            .getElementById("alertSound")
+            .play()
+            .catch((e) => console.log("กำลังรอ..."));
         }
         lastKnownTask = currentActiveTask;
       }
@@ -310,56 +438,85 @@
       function openEditor(index = -1) {
         document.getElementById("editModal").style.display = "flex";
         document.getElementById("editIndex").value = index;
+
         if (index > -1) {
+          document.getElementById("modalTitle").innerText = "✏️ แก้ไขกิจกรรม";
           const item = schedules[activeTable][index];
           document.getElementById("editStartTime").value = item.start;
           document.getElementById("editEndTime").value = item.end;
           document.getElementById("editTitle").value = item.task;
         } else {
+          document.getElementById("modalTitle").innerText =
+            "➕ เพิ่มกิจกรรมใหม่";
           document.getElementById("editStartTime").value = "";
           document.getElementById("editEndTime").value = "";
           document.getElementById("editTitle").value = "";
         }
       }
 
-      function closeEditor() { playAudio('clickSound'); document.getElementById("editModal").style.display = "none"; }
+      function closeEditor() {
+        document.getElementById("editModal").style.display = "none";
+      }
 
       function saveTask() {
-        playAudio('clickSound');
         const start = document.getElementById("editStartTime").value;
         const end = document.getElementById("editEndTime").value;
         const title = document.getElementById("editTitle").value;
         const index = parseInt(document.getElementById("editIndex").value);
 
-        if (start.length === 5 && end.length === 5 && title) {
-          if (index > -1) { schedules[activeTable][index] = { start, end, task: title }; } 
-          else { schedules[activeTable].push({ start, end, task: title }); }
-          schedules[activeTable].sort((a, b) => a.start.localeCompare(b.start));
-          saveData(); renderSchedule(); closeEditor();
-        } else { alert("กรุณากรอกข้อมูลให้ถูกต้อง (เช่น 08:00)"); }
-      }
+        // เช็คว่าพิมพ์รูปแบบถูกไหม เช่น 08:00 หรือ 20:30
+        if (
+          start.length !== 5 ||
+          !start.includes(":") ||
+          end.length !== 5 ||
+          !end.includes(":")
+        ) {
+          alert("กรุณาพิมพ์เวลาให้ครบ 5 ตัวอักษร เช่น 08:30 หรือ 20:00 นะครับ");
+          return;
+        }
 
-      function deleteTask(index) {
-        if (confirm("ลบกิจกรรมนี้?")) {
-          schedules[activeTable].splice(index, 1);
-          saveData(); renderSchedule();
+        if (start && end && title) {
+          if (index > -1) {
+            schedules[activeTable][index] = { start, end, task: title };
+          } else {
+            schedules[activeTable].push({ start, end, task: title });
+          }
+
+          schedules[activeTable].sort((a, b) => a.start.localeCompare(b.start));
+          saveData();
+          renderSchedule();
+          closeEditor();
+        } else {
+          alert("กรุณาใส่ข้อมูลให้ครบทุกช่องนะครับ!");
         }
       }
 
-      function saveData() { localStorage.setItem("mySchedules3", JSON.stringify(schedules)); }
+      function deleteTask(index) {
+        if (confirm("แน่ใจนะว่าจะลบกิจกรรมนี้?")) {
+          schedules[activeTable].splice(index, 1);
+          saveData();
+          renderSchedule();
+        }
+      }
+
+      function saveData() {
+        localStorage.setItem("mySchedules3", JSON.stringify(schedules));
+      }
 
       let timerInterval;
       let seconds = 0;
       let isRunning = false;
 
       function toggleTimer() {
-        playAudio('clickSound');
         const btn = document.getElementById("btnStart");
         if (!isRunning) {
           isRunning = true;
           btn.innerText = "⏸️ พักจับเวลา";
           btn.style.background = "#ff3b30";
-          timerInterval = setInterval(() => { seconds++; updateStopwatchDisplay(); }, 1000);
+          timerInterval = setInterval(() => {
+            seconds++;
+            updateStopwatchDisplay();
+          }, 1000);
         } else {
           isRunning = false;
           btn.innerText = "▶️ เริ่มจับเวลาต่อ";
@@ -369,9 +526,9 @@
       }
 
       function resetTimer() {
-        playAudio('clickSound');
         clearInterval(timerInterval);
-        seconds = 0; isRunning = false;
+        seconds = 0;
+        isRunning = false;
         updateStopwatchDisplay();
         document.getElementById("btnStart").innerText = "เริ่มจับเวลา";
         document.getElementById("btnStart").style.background = "var(--primary)";
@@ -384,8 +541,11 @@
         document.getElementById("stopwatch").innerText = `${h}:${m}:${s}`;
       }
 
+      document.getElementById("tableTitle").innerText = activeTable;
       renderTabs();
       renderSchedule();
+      updateStopwatchDisplay();
+
       setInterval(renderSchedule, 1000);
     </script>
   </body>
