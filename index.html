@@ -98,9 +98,11 @@
         background: var(--active-color);
         font-weight: bold;
       }
+
+      /* ปรับให้มีพื้นที่วางปุ่มแก้ไขและปุ่มลบ */
       .schedule-row {
         display: grid;
-        grid-template-columns: 120px 1fr 80px;
+        grid-template-columns: 100px 1fr 120px;
         align-items: center;
         padding: 15px;
         background: #f9f9fb;
@@ -113,6 +115,26 @@
         background: var(--active-bg);
         transform: scale(1.02);
       }
+      .action-btns {
+        display: flex;
+        gap: 5px;
+        justify-content: flex-end;
+      }
+      .btn-edit {
+        background: #ff9500;
+        color: white;
+        font-size: 12px;
+        padding: 5px 10px;
+        border-radius: 8px;
+      }
+      .btn-delete {
+        background: #ff3b30;
+        color: white;
+        font-size: 12px;
+        padding: 5px 10px;
+        border-radius: 8px;
+      }
+
       #editModal {
         display: none;
         position: fixed;
@@ -176,8 +198,8 @@
           </button>
         </div>
         <div class="card">
-          <button class="btn-main" style="width: 100%" onclick="openEditor()">
-            ➕ เพิ่มกิจกรรม
+          <button class="btn-main" style="width: 100%" onclick="openEditor(-1)">
+            ➕ เพิ่มกิจกรรมใหม่
           </button>
           <button
             onclick="resetToDefault()"
@@ -189,7 +211,7 @@
               font-size: 11px;
             "
           >
-            ⚠️ รีเซ็ตตารางเริ่มต้น (กรณีข้อมูลขาด)
+            ⚠️ รีเซ็ตตารางทั้งหมดกลับเป็นค่าเริ่มต้น
           </button>
         </div>
       </div>
@@ -201,15 +223,22 @@
 
     <div id="editModal">
       <div class="modal-content">
-        <h3 id="modalTitle">แก้ไขกิจกรรม</h3>
-        <input type="hidden" id="editIndex" value="-1" /><label
-          >เริ่ม (08:00)</label
-        ><input type="text" id="editStartTime" /><label>จบ (09:00)</label
-        ><input type="text" id="editEndTime" /><label>กิจกรรม</label
-        ><input type="text" id="editTitle" />
-        <div class="btn-group">
-          <button class="btn-main" onclick="saveTask()">บันทึก</button
-          ><button class="btn-alt" onclick="closeEditor()">ยกเลิก</button>
+        <h3 id="modalTitle">จัดการกิจกรรม</h3>
+        <input type="hidden" id="editIndex" value="-1" />
+        <label>เวลาเริ่ม (เช่น 08:00)</label>
+        <input
+          type="text"
+          id="editStartTime"
+          placeholder="00:00"
+          maxlength="5"
+        />
+        <label>เวลาจบ (เช่น 09:00)</label>
+        <input type="text" id="editEndTime" placeholder="00:00" maxlength="5" />
+        <label>ชื่อกิจกรรม</label>
+        <input type="text" id="editTitle" placeholder="เช่น 🎮 เล่นเกม" />
+        <div class="btn-group" style="margin-top: 15px">
+          <button class="btn-main" onclick="saveTask()">บันทึก</button>
+          <button class="btn-alt" onclick="closeEditor()">ยกเลิก</button>
         </div>
       </div>
     </div>
@@ -259,9 +288,10 @@
         ],
       };
 
+      // เปลี่ยนชื่อความจำใหม่เป็น v5 เพื่อเคลียร์ของเก่า
       let schedules =
-        JSON.parse(localStorage.getItem("mySchedules_v4")) || defaultSchedules;
-      let activeTable = Object.keys(schedules)[0];
+        JSON.parse(localStorage.getItem("mySchedules_v5")) || defaultSchedules;
+      let activeTable = Object.keys(schedules)[0] || "ตื่น 8:00";
       let lastKnownTask = "";
       let isSoundEnabled = false;
 
@@ -277,11 +307,7 @@
         const sound = document.getElementById(id);
         if (sound) {
           sound.currentTime = 0;
-          sound
-            .play()
-            .catch(() =>
-              console.log("เสียงถูกบล็อก โปรดคลิกเปิดระบบเสียงก่อน")
-            );
+          sound.play().catch(() => {});
         }
       }
 
@@ -326,41 +352,66 @@
         ).padStart(2, "0")}`;
         let curTask = getTaskAt(activeTable, curTime);
 
-        schedules[activeTable].forEach((item, index) => {
-          const isActive = curTime >= item.start && curTime < item.end;
-          container.innerHTML += `
-            <div class="schedule-row ${isActive ? "active-now" : ""}">
-              <div class="time-col">${item.start}-${item.end}</div>
-              <div class="task-col">${item.task}</div>
-              <button onclick="deleteTask(${index})" style="background:none; color:#ff3b30; font-size:12px;">ลบ</button>
-            </div>`;
-        });
+        if (schedules[activeTable]) {
+          schedules[activeTable].forEach((item, index) => {
+            const isActive = curTime >= item.start && curTime < item.end;
+            container.innerHTML += `
+              <div class="schedule-row ${isActive ? "active-now" : ""}">
+                <div class="time-col">${item.start}-${item.end}</div>
+                <div class="task-col">${item.task}</div>
+                <div class="action-btns">
+                  <button class="btn-edit" onclick="openEditor(${index})">✏️ แก้ไข</button>
+                  <button class="btn-delete" onclick="deleteTask(${index})">🗑️ ลบ</button>
+                </div>
+              </div>`;
+          });
+        }
 
         document.getElementById("currentTaskLabel").innerText = curTask;
 
-        // เสียงแจ้งเตือนเมื่อเปลี่ยนกิจกรรม
         if (
           lastKnownTask !== "" &&
           lastKnownTask !== curTask &&
           isSoundEnabled
         ) {
           playAudio("alertSound");
-          setTimeout(() => playAudio("alertSound"), 1000); // ดังซ้ำ 3 ครั้ง
+          setTimeout(() => playAudio("alertSound"), 1000);
           setTimeout(() => playAudio("alertSound"), 2000);
         }
         lastKnownTask = curTask;
       }
 
       function resetToDefault() {
-        if (confirm("คุณต้องการล้างข้อมูลและกลับไปใช้ตารางเริ่มต้นใช่ไหม?")) {
-          localStorage.removeItem("mySchedules_v4");
+        if (confirm("ต้องการล้างข้อมูลเพื่อกลับไปใช้ตารางเดิมใช่ไหม?")) {
+          localStorage.removeItem("mySchedules_v5");
           location.reload();
         }
       }
 
-      function openEditor() {
+      // ระบบเพิ่มและแก้ไขกิจกรรม
+      function openEditor(index) {
         document.getElementById("editModal").style.display = "flex";
+        document.getElementById("editIndex").value = index;
+
+        if (index > -1) {
+          // กรณีแก้ไข: ดึงข้อมูลเก่ามาโชว์
+          document.getElementById("modalTitle").innerText = "✏️ แก้ไขกิจกรรม";
+          document.getElementById("editStartTime").value =
+            schedules[activeTable][index].start;
+          document.getElementById("editEndTime").value =
+            schedules[activeTable][index].end;
+          document.getElementById("editTitle").value =
+            schedules[activeTable][index].task;
+        } else {
+          // กรณีเพิ่มใหม่: ทำช่องให้ว่าง
+          document.getElementById("modalTitle").innerText =
+            "➕ เพิ่มกิจกรรมใหม่";
+          document.getElementById("editStartTime").value = "";
+          document.getElementById("editEndTime").value = "";
+          document.getElementById("editTitle").value = "";
+        }
       }
+
       function closeEditor() {
         document.getElementById("editModal").style.display = "none";
       }
@@ -369,19 +420,32 @@
         const s = document.getElementById("editStartTime").value;
         const e = document.getElementById("editEndTime").value;
         const t = document.getElementById("editTitle").value;
-        if (s && e && t) {
-          schedules[activeTable].push({ start: s, end: e, task: t });
+        const index = parseInt(document.getElementById("editIndex").value);
+
+        // เช็คว่ากรอกข้อมูลครบถ้วนไหม
+        if (s.length === 5 && e.length === 5 && t) {
+          if (index > -1) {
+            // ถ้าเป็นการแก้ไข ให้เอาข้อมูลใหม่ไปทับของเก่า
+            schedules[activeTable][index] = { start: s, end: e, task: t };
+          } else {
+            // ถ้าเป็นการสร้างใหม่ ให้เพิ่มต่อท้าย
+            schedules[activeTable].push({ start: s, end: e, task: t });
+          }
+
+          // เรียงเวลาให้ใหม่ด้วย
           schedules[activeTable].sort((a, b) => a.start.localeCompare(b.start));
-          localStorage.setItem("mySchedules_v4", JSON.stringify(schedules));
+          localStorage.setItem("mySchedules_v5", JSON.stringify(schedules));
           renderSchedule();
           closeEditor();
+        } else {
+          alert("กรุณาใส่เวลาให้ครบ (เช่น 08:00) และใส่ชื่อกิจกรรมด้วยครับ!");
         }
       }
 
       function deleteTask(index) {
         if (confirm("ลบกิจกรรมนี้?")) {
           schedules[activeTable].splice(index, 1);
-          localStorage.setItem("mySchedules_v4", JSON.stringify(schedules));
+          localStorage.setItem("mySchedules_v5", JSON.stringify(schedules));
           renderSchedule();
         }
       }
